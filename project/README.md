@@ -26,11 +26,11 @@ Cauchy combination test was read independently of this project, for its own sake
 the fit turned out to be close enough to be worth building around rather than setting
 aside. Their paper solves a specific problem: flagging a rare signal from a test
 statistic repeated many times over, where the repetitions are not independent because
-the underlying windows overlap. That is exactly the problem a correlation-breakdown
-monitor runs into at Stage 07. Flagging "breakdown" once a day across an eighteen-year
-backtest is the same repeated, serially dependent testing problem the authors built
-their method to solve, just applied to daily cross-asset correlation instead of their
-own demonstrated case of intraday drift-burst detection. That is a structural match, not
+the underlying windows overlap. That is exactly the problem this monitor runs into
+once it tries to flag a regime break every trading day for years on end: the same
+repeated, serially dependent testing problem the authors built their method to solve,
+just applied to daily cross-asset correlation instead of their own demonstrated case
+of intraday drift-burst detection. That is a structural match, not
 a topical one, which is why this project uses their specific procedure rather than a
 more generic false-discovery correction.
 
@@ -77,7 +77,7 @@ $\binom{5}{2} = 10$ pairwise correlations at each point in time.
 that order so the pipeline has a working end-to-end signal before the more involved ones
 are added. The simplest is the average pairwise correlation:
 
-$$S_t = \frac{2}{n(n-1)} \sum_{i<j} C_t[i,j]$$
+$$S_t = \frac{2}{n(n-1)} \sum_{i \lt j} C_t[i,j]$$
 
 The second is the Absorption Ratio of Kritzman, Li, Page, and Rigobon (2011): the share
 of total variance in the basket explained by its leading principal component, from the
@@ -91,11 +91,11 @@ factor rather than five independent ones. The third is the Turbulence Index of K
 and Li (2010), a Mahalanobis distance measuring how unusual today's joint pattern of
 returns is relative to its historical mean vector $\mu$ and covariance $\Sigma$:
 
-$$d_t = (r_t - \mu)\,\Sigma^{-1}(r_t - \mu)'$$
+$$d_t = (r_t - \mu)\Sigma^{-1}(r_t - \mu)'$$
 
 **Regime testing.** An Augmented Dickey-Fuller test is run on the rolling average
-correlation series to check the Stage 01 persistence assumption directly rather than
-assume it: a rejection of the unit-root null over a sub-window is evidence the
+correlation series to check the persistence assumption directly rather than
+take it for granted: a rejection of the unit-root null over a sub-window is evidence the
 correlation regime has shifted rather than merely drifted.
 
 **Multiple-testing correction.** Flagging a breakdown on every trading day over an
@@ -105,7 +105,7 @@ end up correlated by construction. A fixed daily threshold under repeated testin
 guarantees false alarms from repetition alone. This is addressed by converting the
 rolling correlation to a proper test statistic via the Fisher z-transform,
 
-$$X_t = \left(\operatorname{arctanh}(\rho_t) - \operatorname{arctanh}(\rho_{\text{baseline}})\right)\sqrt{n-3}$$
+$$X_t = \left(\tanh^{-1}(\rho_t) - \tanh^{-1}(\rho_{\text{baseline}})\right)\sqrt{n-3}$$
 
 which is approximately standard normal under "no regime change," then applying the
 sequential Cauchy combination test of Bouamara, Laurent, and Shi (2023) to the resulting
@@ -179,18 +179,18 @@ project/
 │   ├── raw/            direct pulls from yfinance, unedited
 │   └── processed/      prices_wide.parquet, returns_wide.parquet
 ├── notebooks/
-│   └── project_pipeline.ipynb   single narrative notebook, extended every stage
+│   └── project_pipeline.ipynb   single narrative notebook, extended as work is added
 ├── src/
 │   ├── config.py       tickers, window sizes, thresholds, crisis dates
 │   ├── utils.py        shared helpers, including data acquisition and storage I/O
-│   ├── cleaning.py      calendar alignment, log returns              (Stage 06)
-│   ├── outliers.py      ADF test, threshold rule, SCC procedure       (Stage 07)
-│   ├── features.py      average correlation, Absorption Ratio, Turbulence Index (09)
-│   ├── evaluation.py    precision/recall/F1, lead time, drawdown-avoided (11)
+│   ├── cleaning.py      calendar alignment, log returns
+│   ├── outliers.py      ADF test, threshold rule, SCC procedure
+│   ├── features.py      average correlation, Absorption Ratio, Turbulence Index
+│   ├── evaluation.py    precision/recall/F1, lead time, drawdown-avoided
 │   ├── model.py         HMM, AR(1) forecast. Not in the instructor's example; added
-│   │                    for Stage 10, which the example tree does not reach
-│   ├── report.py        tear sheet. Added for Stage 12, same reason
-│   └── pipeline.py      orchestrates the above end to end. Added for Stages 13-15
+│   │                    to cover modeling, which the example tree does not reach
+│   ├── report.py        tear sheet. Added for the same reason
+│   └── pipeline.py      orchestrates the above end to end
 ├── reports/
 │   └── images/          saved figures
 ├── model/               fitted HMM and other saved model objects
@@ -202,8 +202,8 @@ project/
 
 `config.py`, `utils.py`, `cleaning.py`, `outliers.py`, `features.py`, and
 `evaluation.py` use the instructor's exact file names from the course's git-repository
-structure document. `model.py`, `report.py`, and `pipeline.py` are added for stages that
-example doesn't cover.
+structure document. `model.py`, `report.py`, and `pipeline.py` are added to cover parts
+of the pipeline that example doesn't reach.
 
 ## References
 
