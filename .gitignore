@@ -1,0 +1,23 @@
+# Local class materials — never pushed
+class_materials/
+
+# Instructor reference docs — kept locally at root, never pushed
+/Announcements.docx
+/course_git-repository-structure.pdf
+
+# Reference papers kept locally for the project, never pushed
+project/docs/papers/
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Jupyter
+.ipynb_checkpoints/
+
+# OS
+.DS_Store

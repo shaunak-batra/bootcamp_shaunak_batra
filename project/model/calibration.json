@@ -1,0 +1,18 @@
+{
+  "baseline_rho": -0.45409422052491827,
+  "baseline_z": -0.52440363047096,
+  "theoretical_sd": 0.13245323570650439,
+  "realised_sd": 0.2838601651430069,
+  "inflation_measured": 2.143097249598315,
+  "inflation_config": 2.05,
+  "inflation_used": 2.143097249598315,
+  "sd_used": 0.2838601651430069,
+  "n_train": 2167,
+  "n_independent": 37,
+  "band": {
+    "enter": -0.24391335210100942,
+    "exit": -0.30391335210100945,
+    "band": 0.06
+  },
+  "generated": "20260827-142003"
+}

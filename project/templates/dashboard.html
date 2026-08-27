@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diversification Monitor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d1117; --panel:#151b23; --panel-2:#1b232d; --line:#252e3a;
+    --ink:#e8edf3; --ink-2:#9aa7b8; --ink-3:#6b7788;
+    --accent:#3fb9b2; --accent-dim:#1d4f4c;
+    --calm:#3fa87a; --calm-bg:#11291f; --calm-line:#1f5c42;
+    --alert:#d9534f; --alert-bg:#2a1414; --alert-line:#5e2624;
+    --warn:#d8a13c;
+    --mono:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg:#f4f6f8; --panel:#ffffff; --panel-2:#eef1f5; --line:#dde3ea;
+      --ink:#131820; --ink-2:#515e70; --ink-3:#7d8899;
+      --accent:#0f7a74; --accent-dim:#cfe8e6;
+      --calm:#1a7d52; --calm-bg:#e6f4ec; --calm-line:#b6ddc7;
+      --alert:#b5322e; --alert-bg:#fbe9e8; --alert-line:#eebfbd;
+      --warn:#8a6100;
+    }
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:"Public Sans",system-ui,-apple-system,sans-serif;line-height:1.5;
+       -webkit-font-smoothing:antialiased}
+  .wrap{max-width:1120px;margin:0 auto;padding:32px 22px 80px}
+  a{color:var(--accent)}
+
+  /* header */
+  header{display:flex;justify-content:space-between;align-items:flex-end;
+         gap:16px;flex-wrap:wrap;margin-bottom:26px}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;
+           text-transform:uppercase;color:var(--accent);margin:0 0 7px}
+  h1{font-family:"Archivo",sans-serif;font-weight:800;font-size:1.85rem;
+     letter-spacing:-.02em;margin:0}
+  .asof{font-family:var(--mono);font-size:.78rem;color:var(--ink-3);text-align:right}
+
+  /* status band */
+  .status{border-radius:16px;padding:26px 28px;margin-bottom:20px;
+          border:1px solid;display:grid;grid-template-columns:auto 1fr;
+          gap:26px;align-items:center}
+  .status.elevated{background:var(--alert-bg);border-color:var(--alert-line)}
+  .status.normal{background:var(--calm-bg);border-color:var(--calm-line)}
+  .lamp{width:58px;height:58px;border-radius:50%;flex-shrink:0;position:relative}
+  .status.elevated .lamp{background:var(--alert);
+      box-shadow:0 0 0 8px color-mix(in srgb,var(--alert) 16%,transparent)}
+  .status.normal .lamp{background:var(--calm);
+      box-shadow:0 0 0 8px color-mix(in srgb,var(--calm) 16%,transparent)}
+  .status.elevated .lamp::after{content:"";position:absolute;inset:0;border-radius:50%;
+      background:var(--alert);animation:pulse 2.6s ease-out infinite}
+  @keyframes pulse{0%{opacity:.55;transform:scale(1)}
+                   100%{opacity:0;transform:scale(2.1)}}
+  @media (prefers-reduced-motion: reduce){.status.elevated .lamp::after{animation:none}}
+  .status-label{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
+                text-transform:uppercase;margin:0 0 5px}
+  .status.elevated .status-label{color:var(--alert)}
+  .status.normal .status-label{color:var(--calm)}
+  .status h2{font-family:"Archivo",sans-serif;font-size:1.5rem;margin:0 0 7px;
+             letter-spacing:-.01em}
+  .status p{margin:0;color:var(--ink-2);font-size:.94rem;max-width:70ch}
+
+  /* tiles */
+  .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));
+         gap:13px;margin-bottom:24px}
+  .tile{background:var(--panel);border:1px solid var(--line);border-radius:13px;
+        padding:16px 18px}
+  .tile .k{font-family:var(--mono);font-size:.66rem;letter-spacing:.08em;
+           text-transform:uppercase;color:var(--ink-3);margin:0 0 8px}
+  .tile .v{font-family:"Archivo",sans-serif;font-weight:700;font-size:1.72rem;
+           letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.1}
+  .tile .s{font-size:.78rem;color:var(--ink-3);margin-top:5px}
+  .v.up{color:var(--alert)} .v.down{color:var(--calm)}
+
+  /* panels */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+         padding:22px 24px;margin-bottom:20px}
+  .panel h3{font-family:"Archivo",sans-serif;font-size:1.04rem;margin:0 0 4px}
+  .panel .sub{color:var(--ink-3);font-size:.85rem;margin:0 0 18px;max-width:74ch}
+
+  /* chart */
+  .chartbox{overflow-x:auto}
+  svg{display:block;width:100%;height:auto;min-width:560px}
+  .grid{stroke:var(--line);stroke-width:1}
+  .zero{stroke:var(--ink-3);stroke-width:1;stroke-dasharray:3 3}
+  .thr{stroke:var(--accent);stroke-width:1;stroke-dasharray:5 4}
+  .series{fill:none;stroke:var(--accent);stroke-width:1.6;
+          stroke-linejoin:round;stroke-linecap:round}
+  .axis{font-family:var(--mono);font-size:10px;fill:var(--ink-3)}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;margin-top:12px;
+          font-size:.78rem;color:var(--ink-2)}
+  .legend i{display:inline-block;width:15px;height:0;border-top:2px solid;
+            margin-right:6px;vertical-align:middle}
+
+  /* table */
+  .tablebox{overflow-x:auto}
+  table{border-collapse:collapse;width:100%;font-size:.86rem}
+  th,td{padding:8px 13px;text-align:right;border-bottom:1px solid var(--line);
+        white-space:nowrap}
+  th:first-child,td:first-child{text-align:left}
+  thead th{font-family:var(--mono);font-size:.66rem;letter-spacing:.07em;
+           text-transform:uppercase;color:var(--ink-3);font-weight:600}
+  tbody td{font-family:var(--mono);font-variant-numeric:tabular-nums}
+  tbody tr:hover{background:var(--panel-2)}
+  tr.brk td{background:color-mix(in srgb,var(--alert) 9%,transparent)}
+  .neg{color:var(--calm)} .pos{color:var(--alert)}
+  .bar{display:inline-block;height:7px;border-radius:2px;background:var(--alert);
+       vertical-align:middle}
+
+  /* links */
+  .links{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:13px}
+  .card{display:block;background:var(--panel-2);border:1px solid var(--line);
+        border-radius:11px;padding:15px 17px;text-decoration:none;color:inherit}
+  .card:hover{border-color:var(--accent)}
+  .card .t{font-weight:600;font-size:.92rem;margin-bottom:3px}
+  .card .d{font-size:.79rem;color:var(--ink-3)}
+  footer{margin-top:34px;color:var(--ink-3);font-size:.79rem;text-align:center}
+  code{font-family:var(--mono);font-size:.86em;background:var(--panel-2);
+       border:1px solid var(--line);border-radius:4px;padding:1px 5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <p class="eyebrow">Cross-Asset Monitor</p>
+      <h1>Is diversification still working?</h1>
+    </div>
+    <div class="asof">
+      {{ reading.pair }}<br>as of {{ reading.as_of }}
+    </div>
+  </header>
+
+  <section class="status {{ 'elevated' if reading.regime == 'elevated' else 'normal' }}">
+    <div class="lamp"></div>
+    <div>
+      <p class="status-label">{{ 'Hedge impaired' if reading.regime == 'elevated' else 'Hedge intact' }}</p>
+      <h2>{{ headline }}</h2>
+      <p>{{ explanation }}</p>
+    </div>
+  </section>
+
+  <section class="tiles">
+    <div class="tile">
+      <p class="k">Correlation</p>
+      <div class="v {{ 'up' if reading.correlation > 0 else 'down' }}">{{ '%+.3f'|format(reading.correlation) }}</div>
+      <div class="s">baseline {{ '%+.3f'|format(reading.baseline_correlation) }}</div>
+    </div>
+    <div class="tile">
+      <p class="k">20-day change</p>
+      <div class="v {{ 'up' if reading.correlation_20d_change > 0 else 'down' }}">{{ '%+.3f'|format(reading.correlation_20d_change) }}</div>
+      <div class="s">{{ 'rising toward zero' if reading.correlation_20d_change > 0 else 'falling, hedge firming' }}</div>
+    </div>
+    <div class="tile">
+      <p class="k">Percentile</p>
+      <div class="v">{{ '%.0f'|format(reading.percentile_vs_history * 100) }}</div>
+      <div class="s">vs 19 years of history</div>
+    </div>
+    <div class="tile">
+      <p class="k">Diversification ratio</p>
+      <div class="v">{{ '%.2f'|format(reading.diversification_ratio) }}</div>
+      <div class="s">1.00 means none at all</div>
+    </div>
+    <div class="tile">
+      <p class="k">Flagged today</p>
+      <div class="v {{ 'up' if reading.flagged else 'down' }}">{{ 'YES' if reading.flagged else 'NO' }}</div>
+      <div class="s">after multiple-testing correction</div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>The hedge that matters, 2007 to today</h3>
+    <p class="sub">60-day rolling correlation between equities and long Treasuries. Below
+      the dashed line the two move oppositely and bonds cushion equity losses. Above zero
+      they move together and the hedge has inverted.</p>
+    <div class="chartbox">{{ chart_svg|safe }}</div>
+    <div class="legend">
+      <span><i style="border-color:var(--accent)"></i>SPY-TLT correlation</span>
+      <span><i style="border-color:var(--accent);border-top-style:dashed"></i>regime threshold {{ '%.3f'|format(band.enter) }}</span>
+      <span><i style="border-color:var(--ink-3);border-top-style:dashed"></i>zero</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>By year</h3>
+    <p class="sub">Flagged days are those where the correlation moved far enough from its
+      calibrated baseline to survive the multiple-testing correction. Shaded rows are the
+      post-2021 regime.</p>
+    <div class="tablebox">
+      <table>
+        <thead>
+          <tr><th>Year</th><th>Mean correlation</th><th>Diversification ratio</th>
+              <th>Flagged days</th><th>Share of year</th></tr>
+        </thead>
+        <tbody>
+        {% for row in annual %}
+          <tr class="{{ 'brk' if row.year >= 2021 else '' }}">
+            <td>{{ row.year }}</td>
+            <td class="{{ 'pos' if row.corr > 0 else 'neg' }}">{{ '%+.3f'|format(row.corr) }}</td>
+            <td>{{ '%.2f'|format(row.dr) }}</td>
+            <td>{{ row.flagged }} / {{ row.days }}</td>
+            <td><span class="bar" style="width:{{ (row.flagged / row.days * 110)|round|int }}px"></span></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>The full analysis</h3>
+    <p class="sub">This page is the live summary. The reasoning, the calibration decisions,
+      and the places where the data contradicted the original premise are written up in
+      full.</p>
+    <div class="links">
+      <a class="card" href="/report"><div class="t">Risk memo</div>
+        <div class="d">Findings, assumptions, decision implications</div></a>
+      <a class="card" href="/notebook"><div class="t">Full notebook</div>
+        <div class="d">Every cell with its output and charts</div></a>
+      <a class="card" href="/reading"><div class="t">JSON reading</div>
+        <div class="d">The same numbers, for a program</div></a>
+      <a class="card" href="/history"><div class="t">JSON history</div>
+        <div class="d">Annual series via the API</div></a>
+    </div>
+  </section>
+
+  <footer>
+    Regime model: two-state Gaussian HMM, expected persistence
+    {{ '%.0f'|format(reading.regime_persistence_days) }} days.
+    Flags corrected within {{ family }} families at alpha {{ alpha }}.
+    Rebuild everything with <code>python run.py</code>.
+  </footer>
+
+</div>
+</body>
+</html>
